@@ -1,0 +1,75 @@
+#!/bin/bash
+
+echo ""
+echo ""
+echo "   _____                      __     _______    __"
+echo "  / ___/____ ___  ____ ______/ /_   /_  __/ |  / /"
+echo "  \__ \/ __ \`__ \/ __ \`/ ___/ __/    / /  | | / / "
+echo " ___/ / / / / / / /_/ / /  / /_     / /   | |/ /  "
+echo "/____/_/ /_/ /_/\__,_/_/   \__/    /_/    |___/   "
+echo ""
+echo ""
+
+# Check if server is running
+value=$(curl -s localhost)
+
+if [[ $value == *"It works!"* ]] 
+then
+	# Server is running, confirm user wants to shutdow
+
+	echo "Server is already running."
+	echo "Do you want to stop it (debug restarts the debugging server)?"
+	read -p "[Y/n/debug]:" shutdownServer
+
+	shopt -s nocasematch
+
+	case "$shutdownServer" in
+	  y|yes) 
+
+		echo "Server shutting down"
+
+		apachectl stop
+		sleep 2
+		
+		value=$(curl -s localhost)	
+			
+		if [[ $value == *"It works!"* ]] 
+		then
+			echo "Error: Server is still running"
+		else
+			echo "Server stopped"
+		fi
+		;;
+
+	  n|no) exit;;
+
+	  debug) 
+
+		echo "Starting the debugging server (use [^C] to stop)..."
+		node "`pwd`/smarttv_debugging_server.js"
+		;;
+
+	  * ) echo "invalid input";;
+	esac
+else
+	# Starting the server
+
+	echo "Starting the server"
+
+	apachectl start
+	
+	sleep 2
+	
+	value=$(curl -s localhost)
+
+	if [[ $value == *"It works!"* ]]
+	then
+		echo "Server is running"
+
+		# Start the debugging server
+		echo "Starting the debugging server (use [^C] to stop)..."
+		node "`pwd`/smarttv_debugging_server.js"
+	else
+		echo "Error starting server"
+	fi
+fi
